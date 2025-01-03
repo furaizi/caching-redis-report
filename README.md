@@ -423,16 +423,16 @@ public class UserService {
 ### 12. Тестування кешування
 
 Відправляємо запит на отримання User з id=4. Бачимо, що час очікування надто великий (через нашу встановлену затримку), а саме Waiting
-![get_user4](./resources/get_user2.png)
+![get_user4](./resources/get_user4.png)
 
 Бачимо, що в консолі залоговано, що застосунок виконав SQL запит
-![console_get_user4](./resources/console_get_user2.png)
+![console_get_user4](./resources/console_get_user4.png)
 
 Відправляємо повторний запит на отримання User з id=4. Тепер відповідь ми отримали моментально, бо вона закешована
-![get_user4_cached](./resources/get_user2_cached.png)
+![get_user4_cached](./resources/get_user4_cached.png)
 
 В консолі бачимо, що застосунок не виконував жодних SQL запитів
-![console_get_user4_caches](./resources/console_get_user2_cached.png)
+![console_get_user4_caches](./resources/console_get_user4_cached.png)
 
 Тепер отримаємо User з id=2. Результат ананалогічний
 ![get_user2](./resources/get_user2.png)
