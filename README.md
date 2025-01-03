@@ -12,6 +12,7 @@
 - [Проблеми та виклики кешування](#проблеми-та-виклики-кешування)
 - [Рекомендації щодо використання кешування](#рекомендації-щодо-використання-кешування)
 - [Висновки](#висновки)
+- [Бонус: налаштування Redis у Spring Boot проєкті](#бонус-налаштування-redis-у-spring-boot-проєкті)
 
 
 ## Вступ
@@ -249,3 +250,190 @@ E-commerce платформи також активно використовую
 
 Подальші дослідження у сфері кешування спрямовані на створення нових алгоритмів, які забезпечують оптимальний баланс між швидкістю роботи та актуальністю даних. Також інтеграція з технологіями машинного навчання відкриває перспективи для адаптивного управління кешем, базованого на аналізі поведінки користувачів, що дозволяє ще більше підвищити ефективність системи.
 
+
+## Бонус: налаштування Redis у Spring Boot проєкті
+
+### 1. Потрібно завантажити Docker Desktop, якщо ви використовуєте Windows.
+Якщо в вас Linux, ви можете завантажити Redis напряму через менеджер пакетів `apt`.
+
+### 2. Запускаємо Docker Desktop
+
+### 3. Відкриваємо PowerShell або командний рядок
+
+### 4. Вводимо наступну команду
+```
+docker run --name redis -p 6379:6379 -d redis
+```
+Щоб впевнетись, що Redis був запущений, введіть:
+```
+docker ps
+```
+
+### 5. Відкриваємо наш Spring Boot проєкт, або створюємо його, якщо його нема
+
+### 6. Додаємо наступні залежності у файл `pom.xml` (якщо ви використовуєте Maven)
+```xml
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-data-redis</artifactId>
+</dependency>
+<dependency>
+    <groupId>io.lettuce</groupId>
+    <artifactId>lettuce-core</artifactId>
+    <version>6.5.2.RELEASE</version>
+</dependency>
+```
+
+### 7. Налаштовуємо Redis у `application.properties` (або `application.yml`)
+```properties
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
+spring.data.redis.password=
+```
+
+### 8. Додаємо аннотацію `@EnableCaching` до головного класу проєкту
+```java
+@SpringBootApplication
+@EnableCaching
+public class RestProjectApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(RestProjectApplication.class, args);
+    }
+}
+```
+
+### 9. Додаємо інтерфейс-маркер `Serializable` до класів-сутностей
+```java
+@Table
+@Data
+public class User implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    @Id
+    private long id;
+    private String username;
+    private String password;
+    private String email;
+    private String role;
+    @Column("isBanned")
+    private boolean isBanned;
+}
+```
+
+### 10. Налаштовуємо сервіс, додаючи аннотації `@Cacheable` до методів, які не змінюють стан бази даних, і `@CacheEvict` - які змінюють
+```java
+@Service
+public class UserService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Cacheable(cacheNames = "users", key = "#root.methodName")
+    public Flux<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
+    @Cacheable(cacheNames = "users", key = "#id")
+    public Mono<User> getUserById(Long id) {
+        return userRepository.findById(id);
+    }
+
+    @CacheEvict(cacheNames = "users", allEntries = true)
+    public Mono<User> createUser(User user) {
+        return userRepository.save(user);
+    }
+
+    @CacheEvict(cacheNames = "users", allEntries = true)
+    public Mono<User> updateUser(Long id, User updatedUser) {
+        return userRepository.findById(id)
+                .flatMap(existingUser -> {
+                    existingUser.setUsername(updatedUser.getUsername());
+                    existingUser.setPassword(updatedUser.getPassword());
+                    existingUser.setEmail(updatedUser.getEmail());
+                    existingUser.setRole(updatedUser.getRole());
+                    existingUser.setBanned(updatedUser.isBanned());
+                    return userRepository.save(existingUser);
+                });
+    }
+
+    @CacheEvict(cacheNames = "users", allEntries = true)
+    public Mono<Void> deleteUser(Long id) {
+        return userRepository.deleteById(id);
+    }
+}
+```
+
+### 11. Для наглядності, додаємо затримку до методів сервісу
+```java
+@Service
+public class UserService {
+
+    private static final Duration DELAY = Duration.ofSeconds(10);
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Cacheable(cacheNames = "users", key = "#root.methodName")
+    public Flux<User> getAllUsers() {
+        return userRepository.findAll()
+                .delayElements(DELAY);
+    }
+
+    @Cacheable(cacheNames = "users", key = "#id")
+    public Mono<User> getUserById(Long id) {
+        return userRepository.findById(id)
+                .delayElement(DELAY);
+    }
+
+    @CacheEvict(cacheNames = "users", allEntries = true)
+    public Mono<User> createUser(User user) {
+        return userRepository.save(user)
+                .delayElement(DELAY);
+    }
+
+    @CacheEvict(cacheNames = "users", allEntries = true)
+    public Mono<User> updateUser(Long id, User updatedUser) {
+        return userRepository.findById(id)
+                .flatMap(existingUser -> {
+                    existingUser.setUsername(updatedUser.getUsername());
+                    existingUser.setPassword(updatedUser.getPassword());
+                    existingUser.setEmail(updatedUser.getEmail());
+                    existingUser.setRole(updatedUser.getRole());
+                    existingUser.setBanned(updatedUser.isBanned());
+                    return userRepository.save(existingUser);
+                })
+                .delayElement(DELAY);
+    }
+
+    @CacheEvict(cacheNames = "users", allEntries = true)
+    public Mono<Void> deleteUser(Long id) {
+        return userRepository.deleteById(id)
+                .delayElement(DELAY);
+    }
+}
+```
+
+12. Тестування кешування
+
+Відправляємо запит на отримання User з id=4. Бачимо, що час очікування надто великий (через нашу встановлену затримку), а саме Waiting
+![get_user4](./resources/get_user2.png)
+
+Бачимо, що в консолі залоговано, що застосунок виконав SQL запит
+![console_get_user4](./resources/console_get_user2.png)
+
+Відправляємо повторний запит на отримання User з id=4. Тепер відповідь ми отримали моментально, бо вона закешована
+![get_user4_cached](./resources/get_user2_cached.png)
+
+В консолі бачимо, що застосунок не виконував жодних SQL запитів
+![console_get_user4_caches](./resources/console_get_user2_cached.png)
+
+Тепер отримаємо User з id=2. Результат ананалогічний
+![get_user2](./resources/get_user2.png)
+![console_get_user2](./resources/console_get_user2.png)
+
+І повторний запит
+![get_user2_cached](./resources/get_user2_cached.png)
+![console_get_user2_cached](./resources/console_get_user2_cached.png)
