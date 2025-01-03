@@ -1,5 +1,13 @@
 
-# Доповідь на тему "Реалізація кешування даних в базах даних"
+# Доповідь на тему "Реалізація кешування в базах даних"
+
+## Відео
+
+[![Відео](./resources/preview.jpg)](https://www.youtube.com/watch?v=qhViuy902Qo)
+
+## Презентація
+
+[![Відео](./resources/preview.jpg)](https://www.canva.com/design/DAGbFtROXGw/xAghhONXqR3gl_nn1-wZBA/edit?utm_content=DAGbFtROXGw&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
 
 ## План
 - [Вступ](#вступ)
