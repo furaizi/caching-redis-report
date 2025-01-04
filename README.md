@@ -7,7 +7,7 @@
 
 ## Презентація
 
-[![Відео](./resources/preview.jpg)](https://www.canva.com/design/DAGbFtROXGw/xAghhONXqR3gl_nn1-wZBA/edit?utm_content=DAGbFtROXGw&utm_campaign=designshare&utm_medium=link2&utm_source=sharebutton)
+[![Презентація](./resources/preview.jpg)](https://www.canva.com/design/DAGbFtROXGw/v6bFdjsJJAN0A6TZ4hNJ6Q/view?utm_content=DAGbFtROXGw&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=h62c74b4dd6)
 
 ## План
 - [Вступ](#вступ)
